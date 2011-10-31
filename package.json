@@ -1,0 +1,19 @@
+{
+    "name": "application-name"
+  , "version": "0.0.1"
+  , "private": true
+  , "engines": {
+    "node": ">= 0.4.0"
+  }
+  , "dependencies": {
+      "express": "2.5.0"
+    , "jade": ">= 0.0.1"
+    , "mongoose": ">= 2.3.8"
+    , "connect": "1.7.1"
+    , "connect-mongodb": "1.0.0"
+		, "zombie": ">= 0.10.1"
+  },
+  "bin": {
+    "nodePunch": "bin/nodePunch.js"
+  }
+}
