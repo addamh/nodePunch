@@ -52,20 +52,58 @@ app.configure(function(){
   app.use(express.static(__dirname + '/public'));
 });
 
-// Routes
+
+// Error Handling
+
+function NotFound(msg) {
+  this.name = 'NotFound';
+  Error.call(this, msg);
+  Error.captureStackTrace(this, arguments.callee);
+}
+
+
+sys.inherits(NotFound, Error);
+
+app.get('/404', function(req, res) {
+  throw new NotFound;
+});
+
+app.get('/500', function(req, res) {
+  throw new Error('An unexpected error');
+});
+
+app.error(function(err, req, res, next) {
+  if (err instanceof NotFound) {
+    res.render('404.jade', { status: 404 });
+  } else {
+    next(err);
+  }
+});
+
+if (app.settings.env == 'production') {
+  app.error(function(err, req, res) {
+    res.render('500.jade', {
+      status: 500,
+      locals: {
+        error: err
+      } 
+    });
+  });
+}
+
+//Routes
 
 app.get('/', routes.index);
 
+
+// Return list of all Punches
 app.get('/punches.:format?', function(req, res) {
   Punch.find({},function(err, punches) {
       res.send(punches); 
   });
 }); 
 
-app.get('/shit', function(req, res){
-  res.send('bullshit');
-});
-
+// Create new Punch
 app.post('/punches.:format?', function(req, res) {
   var punch = new Punch(req.body.punch);
   punch.save(function() {
@@ -82,5 +120,53 @@ app.post('/punches.:format?', function(req, res) {
   });
 });
 
-app.listen(3000);
-console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
+
+// Update Punch
+app.put('/punches/:id.:format?', function(req, res, next) {
+  Punch.findOne({ _id: req.params.id }, function(err, p) {
+    if (!p) return next(new NotFound('Punch not found'));
+    p.punchIn = req.body.punchIn;
+    p.punchOut = req.body.punchOut;
+    p.notes = req.body.notes;
+    p.tags = req.body.tags;
+
+    p.save(function(err) {
+      switch (req.params.format) {
+        case 'json':
+          res.send(p.toObject());
+        break;
+
+        default:
+          req.flash('info', 'Punch Updated');
+          res.direct('/punches');
+      }
+    });
+  });
+});
+
+// Delete Punch
+app.del('/punches/:id.:format?', function(req, res, next) {
+  Document.findOne({ _id: req.params.id }, function(err, p) {
+    if (!p) return next(new NotFound('Punch not found'));
+
+    p.remove(function() {
+      switch (req.params.format) {
+        case 'json':
+          res.send('true');
+        break;
+
+        default:
+          req.flash('info', 'Punch deleted');
+          res.redirect('/punches');
+      } 
+    });
+  });
+});
+
+
+
+if (!module.parent) {
+  app.listen(3000);
+  console.log('Express server listening on port %d, environment: %s', app.address().port, app.settings.env)
+  console.log('Using connect %s, Express %s, Jade %s', connect.version, express.version, jade.version);
+}
