@@ -31,7 +31,7 @@ app.configure('test', function() {
 });
 
 app.configure('production', function() {
-  app.set('db-uri', 'mongodb://localhost/nodePunch-production');
+  app.set('db-uri', 'mongodb://heroku:test@staff.mongohq.com:10073/nodePunch-production');
 });
 
 // Models
