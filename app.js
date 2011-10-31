@@ -163,13 +163,10 @@ app.del('/punches/:id.:format?', function(req, res, next) {
   });
 });
 
-if(app.settings.env == 'production'){
-app.listen(43014);
-} else {
-app.listen(3000);
-}
+var port = process.env.PORT || 3000
 
 if (!module.parent) {
-  console.log('Express server listening on port %d, environment: %s', app.address().port, app.settings.env)
+  app.listen(port);
+  console.log('Express server listening on port %d, environment: %s', app.address().port, app.settings.env);
   console.log('Using connect %s, Express %s, Jade %s', connect.version, express.version, jade.version);
 }
